@@ -12,14 +12,24 @@ from PIL import Image
 from flask import Flask
 from io import BytesIO
 
-from keras.models import load_model
+from tensorflow.keras.models import load_model
 import h5py
-from keras import __version__ as keras_version
+from tensorflow.keras import __version__ as keras_version
+import tensorflow as tf
+import cv2
 
 sio = socketio.Server()
 app = Flask(__name__)
 model = None
 prev_image_array = None
+
+from tensorflow.compat.v1 import ConfigProto
+from tensorflow.compat.v1 import InteractiveSession
+
+config = ConfigProto()
+config.gpu_options.per_process_gpu_memory_fraction = 0.2
+config.gpu_options.allow_growth = True
+session = InteractiveSession(config=config)
 
 
 class SimplePIController:
@@ -50,24 +60,30 @@ controller.set_desired(set_speed)
 
 @sio.on('telemetry')
 def telemetry(sid, data):
+    # print("telemetry")
     if data:
         # The current steering angle of the car
         steering_angle = data["steering_angle"]
         # The current throttle of the car
         throttle = data["throttle"]
         # The current speed of the car
-        speed = data["speed"]
+        # try:
+        speed = float(data["speed"])
+        # except:
+        #     speed = 0.9
         # The current image from the center camera of the car
         imgString = data["image"]
         image = Image.open(BytesIO(base64.b64decode(imgString)))
         image_array = np.asarray(image)
-        steering_angle = float(model.predict(image_array[None, :, :, :], batch_size=1))
-
-        throttle = controller.update(float(speed))
-
-        print(steering_angle, throttle)
+        res_array = cv2.resize(image_array, dsize=(160, 80), interpolation=cv2.INTER_CUBIC)
+        steering_angle = float(model.predict(res_array[None, :, :, :], batch_size=1))
+        # print("steering_angle", steering_angle)
+    
+        throttle = controller.update(speed)
+        # print("throttle",throttle)
+        # print(steering_angle, throttle)
         send_control(steering_angle, throttle)
-
+        # print("after send")
         # save frame
         if args.image_folder != '':
             timestamp = datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S_%f')[:-3]
