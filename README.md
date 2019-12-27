@@ -114,6 +114,6 @@ Then I repeated this process on track two in order to get more data points.
 
 After the collection process, I had 19944 number of data points. I used left and right cam images with 0.1 bias in steering so after all I had 59832 examples.
 
-I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was between 5 or 10 as evidenced by using keras model checkpoint. I used an adam optimizer so that manually training the learning rate wasn't necessary.
+I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was 50 as evidenced by using keras model checkpoint. I used an adam optimizer so that manually training the learning rate wasn't necessary.
 
 Also you can find the model driving in the [video1](./examples/run.mp4)
